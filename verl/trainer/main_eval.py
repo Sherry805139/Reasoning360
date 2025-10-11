@@ -36,6 +36,7 @@ from verl.trainer.ppo.reward import get_custom_reward_fn
 from verl.utils.fs import copy_to_local
 from verl.utils.reward_score import default_compute_score
 
+import random
 
 # --------------------------------------------------------------------------- #
 # Unbiased pass@k estimator
@@ -114,10 +115,11 @@ def main(config):
     responses = dataset[config.data.response_key]
     data_sources = dataset[config.data.data_source_key]
     reward_model_data = dataset[config.data.reward_model_key]
+    
     try:
         extra_info_data = dataset["extra_info"]
     except Exception:
-        extra_info_data = None
+        extra_info_data = [{'split': 'test'} for i in range(len(dataset))]
 
     total = len(dataset)
 
@@ -131,7 +133,8 @@ def main(config):
     compute_score = get_custom_reward_fn(config) or default_compute_score
 
     # Create Ray remote tasks for each data item
-    remote_tasks = [process_item.remote(compute_score, data_sources[i], responses[i], reward_model_data[i], extra_info_data[i]) for i in range(total)]
+    remote_tasks_ = [process_item.remote(compute_score, data_sources[i+0], responses[i+0], reward_model_data[i+0], extra_info_data[i+0]) for i in range(total)]
+    remote_tasks = remote_tasks_
 
     # Compute max_k (number of responses per item) and candidate k values (powers of 2)
     max_k = len(responses.tolist()[-1])
@@ -140,6 +143,19 @@ def main(config):
     avg_pass = 0  # Sum of average scores for all items
 
     # Process results as they become available
+    correct_list = list()
+    pass_list = list()
+    pass_k_stat_list = {k: list() for k in candidate_ks if k <= max_k}
+    balance_position = list()
+    balance_position_position = dict()
+    balance_position1 = list()
+    balance_position_position1 = dict()
+    co_position = list()
+    co_position_position = dict()
+    co_position_position_all = dict()
+    wr_position = list()
+    wr_position_position = dict()
+    wr_position_position_all = dict()
     with tqdm(total=total) as pbar:
         while len(remote_tasks) > 0:
             # Wait for Ray tasks to complete
@@ -148,8 +164,26 @@ def main(config):
                 data_source, score_lst = ray.get(result_id)
                 # Count the number of correct responses (score == 1.0)
                 pass_count = sum(1 for score in score_lst if score == 1)
+                correct_ = [s_i for s_i in range(len(score_lst)) if score_lst[s_i] == 1]
+                error_ = [s_i for s_i in range(len(score_lst)) if score_lst[s_i] == 0]
+                if len(correct_) >= 2 and len(error_) >= 2:
+                    balance_position.append(remote_tasks_.index(result_id)+0)
+                    balance_position_position[remote_tasks_.index(result_id)+0] = random.sample(correct_, 2) + random.sample(error_, 2)
+                if len(correct_) >= 1 and len(error_) >= 1:
+                    balance_position1.append(remote_tasks_.index(result_id)+0)
+                    balance_position_position1[remote_tasks_.index(result_id)+0] = random.sample(correct_, 1) + random.sample(error_, 1)
+                if len(correct_) >= 1:
+                    co_position.append(remote_tasks_.index(result_id)+0)
+                    co_position_position[remote_tasks_.index(result_id)+0] = random.sample(correct_, 1)
+                    co_position_position_all[remote_tasks_.index(result_id)+0] = correct_
+                if len(error_) >= 1:
+                    wr_position.append(remote_tasks_.index(result_id)+0)
+                    wr_position_position[remote_tasks_.index(result_id)+0] = random.sample(error_, 1)
+                    wr_position_position_all[remote_tasks_.index(result_id)+0] = error_
+                correct_list.append(remote_tasks_.index(result_id))
                 avg_score = float(np.mean(score_lst))
                 avg_pass += avg_score
+                pass_list.append(avg_score)
                 data_source_reward[data_source].append(avg_score)
                 pbar.update(1)
 
@@ -157,6 +191,7 @@ def main(config):
                 for k_val, _ in enumerate(score_lst, start=1):
                     if k_val in candidate_ks:
                         pass_k_stat[k_val] += unbiased_pass_at_k(max_k, pass_count, k_val)
+                        pass_k_stat_list[k_val].append(unbiased_pass_at_k(max_k, pass_count, k_val))
 
     # Prepare output metrics
     metric_output_path = config.data.path.replace(".parquet", "_metric.json")
@@ -165,12 +200,29 @@ def main(config):
         **{f"pass@{k_val}": pass_k_stat[k_val] / total * 100.0 for k_val in candidate_ks},
         # Traditional average pass@1 metric
         f"pass@1_(avg{max_k})": avg_pass / total * 100.0,
+        "correct_list": correct_list,
+        "pass_list": pass_list,
+        "pass_k_stat_list": pass_k_stat_list,
+        "balance_position": balance_position,
+        "balance_position_position": balance_position_position,
+        "balance_position1": balance_position1,
+        "balance_position_position1": balance_position_position1,
+        "co_position": co_position,
+        "co_position_position": co_position_position,
+        "co_position_position_all": co_position_position_all,
+        "wr_position": wr_position,
+        "wr_position_position": wr_position_position,
+        "wr_position_position_all": wr_position_position_all
     }
     # Save metrics to JSON file
     with open(metric_output_path, "w") as f:
         json.dump(metric_data, f, indent=4)
 
     print(metric_data)
+    print(correct_list)
+    print(pass_list)
+    print(pass_k_stat_list)
+    print(len(balance_position))
 
     # Print per-data-source average scores
     metric_dict = {}

@@ -76,7 +76,10 @@ def default_compute_score(data_source, solution_str, ground_truth, extra_info=No
     elif data_source.startswith("table"):
         # TODO: tmp placeholder using math_verify
         from . import tablereason
-        res = tablereason.compute_score(solution_str, ground_truth)
+        #res = tablereason.compute_score(solution_str, ground_truth)
+        #res = tablereason.compute_score_cot_step_judge(solution_str, ground_truth, extra_info)
+        #res = tablereason.compute_score_cot_step(solution_str, ground_truth)
+        res = tablereason.compute_score_adver(data_source=data_source, model_output=solution_str, ground_truth=ground_truth, extra_info=extra_info)
     elif data_source.startswith('stem__gpqa'):
         from . import gpqa
         from . import supergpqa

@@ -1,0 +1,89 @@
+{
+  "os":  "Linux-5.15.0-112-generic-x86_64-with-glibc2.35",
+  "python":  "CPython 3.12.0",
+  "startedAt":  "2025-08-01T02:22:36.712544Z",
+  "program":  "/home/hmpiao/adv_reason/Reasoning360/sft.py",
+  "codePath":  "sft.py",
+  "codePathLocal":  "sft.py",
+  "git":  {
+    "remote":  "https://github.com/LLM360/Reasoning360.git",
+    "commit":  "07a8e922156ba53573f25d6b9f23974ef7142663"
+  },
+  "email":  "piaohongming02@gmail.com",
+  "root":  "/home/hmpiao/adv_reason/Reasoning360",
+  "host":  "cs421d",
+  "executable":  "/data1/hmpiao/tmp/envs/sft_reason/bin/python3",
+  "cpu_count":  48,
+  "cpu_count_logical":  96,
+  "gpu":  "NVIDIA RTX 5880 Ada Generation",
+  "gpu_count":  8,
+  "disk":  {
+    "/":  {
+      "total":  "895603392512",
+      "used":  "675730513920"
+    }
+  },
+  "memory":  {
+    "total":  "1623040065536"
+  },
+  "gpu_nvidia":  [
+    {
+      "name":  "NVIDIA RTX 5880 Ada Generation",
+      "memoryTotal":  "51527024640",
+      "cudaCores":  14080,
+      "architecture":  "Ada",
+      "uuid":  "GPU-ecadb969-afc0-daed-f688-98bf0f634d89"
+    },
+    {
+      "name":  "NVIDIA RTX 5880 Ada Generation",
+      "memoryTotal":  "51527024640",
+      "cudaCores":  14080,
+      "architecture":  "Ada",
+      "uuid":  "GPU-04d696ca-fe16-6826-a952-7f32f34f37d5"
+    },
+    {
+      "name":  "NVIDIA RTX 5880 Ada Generation",
+      "memoryTotal":  "51527024640",
+      "cudaCores":  14080,
+      "architecture":  "Ada",
+      "uuid":  "GPU-7856f4fd-5a64-98b9-8cb4-3767ebf920d0"
+    },
+    {
+      "name":  "NVIDIA RTX 5880 Ada Generation",
+      "memoryTotal":  "51527024640",
+      "cudaCores":  14080,
+      "architecture":  "Ada",
+      "uuid":  "GPU-3d50a1a2-87f5-ce0a-0773-76b8fbb6ac68"
+    },
+    {
+      "name":  "NVIDIA RTX 5880 Ada Generation",
+      "memoryTotal":  "51527024640",
+      "cudaCores":  14080,
+      "architecture":  "Ada",
+      "uuid":  "GPU-cc4cd62f-e50c-f460-f17f-4eb11148e3ae"
+    },
+    {
+      "name":  "NVIDIA RTX 5880 Ada Generation",
+      "memoryTotal":  "51527024640",
+      "cudaCores":  14080,
+      "architecture":  "Ada",
+      "uuid":  "GPU-ad6edab2-6365-bb5f-ba6e-69583fb91ffb"
+    },
+    {
+      "name":  "NVIDIA RTX 5880 Ada Generation",
+      "memoryTotal":  "51527024640",
+      "cudaCores":  14080,
+      "architecture":  "Ada",
+      "uuid":  "GPU-b93ac648-a465-b182-1a4e-2cfaa03a3911"
+    },
+    {
+      "name":  "NVIDIA RTX 5880 Ada Generation",
+      "memoryTotal":  "51527024640",
+      "cudaCores":  14080,
+      "architecture":  "Ada",
+      "uuid":  "GPU-ed32baf4-941b-48da-9041-6342342e204a"
+    }
+  ],
+  "cudaVersion":  "12.5",
+  "writerId":  "tdqcaq5xsgruj40hop70rrssuw8iceax"
+}
