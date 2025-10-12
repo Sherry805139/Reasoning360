@@ -1,57 +1,28 @@
 #!/bin/bash
-#SBATCH --job-name=example-multinode-rl-qwen32b-base
-#SBATCH --partition=main
-#SBATCH --nodes=8
-#SBATCH --ntasks=8
-#SBATCH --ntasks-per-node=1
-#SBATCH --gres=gpu:8
-#SBATCH --cpus-per-task=96
-#SBATCH --mem=512G
-#SBATCH --output=slurm/%x-%j.out
-#SBATCH --error=slurm/%x-%j.err
-#SBATCH --exclusive
-#SBATCH --time=720:00:00
-SLURM_NNODES=1
-SLURM_CPUS_PER_TASK=96
 
-# =================== Frequently Used Variables ===================
-RESUME_CKPT_DIR_NAME=""  # Fill in the checkpoint directory name to resume from, otherwise from scratch
-export STEM_LLM_JUDGE_URL="<STEM_LLM_JUDGE_URL>"  # Fill in the llm-as-judge hosted URL, currently used only in 'STEM' domain
+# =================== User-Configurable Settings ===================
+# --- Execution Environment ---
+NUM_GPUS=8  # Set the number of GPUs to use on this node
 
-#export NETRC="piaohongming02-city-university-of-hong-kong"
-#export WANDB_API_KEY="3b7a3bc7f4c002c90914d317e41221b5d41137b6"
+# --- Resuming & Logging ---
+RESUME_CKPT_DIR_NAME=""  # Fill in the W&B experiment name to resume from, otherwise leave empty to start from scratch
+WANDB_PROJECT="Reasoning360" # Your wandb project name
 
-# =================== Cluster Environment ===================
-#export NCCL_DEBUG=info
-#export NCCL_ALGO=NVLSTree
-#export NCCL_IBEXT_DISABLE=1
-#export NCCL_NVLS_ENABLE=1
-#export NCCL_IB_HCA=mlx5
-#export UCX_NET_DEVICES=mlx5_0:1,mlx5_1:1,mlx5_2:1,mlx5_3:1,mlx5_4:1,mlx5_5:1,mlx5_6:1,mlx5_7:1
-export NCCL_P2P_DISABLE=1 
+# --- External Services ---
+export STEM_LLM_JUDGE_URL="<STEM_LLM_JUDGE_URL>"  # Optional: Fill in the llm-as-judge hosted URL for 'STEM' domain evaluation
 
-# Get the list of allocated nodes
-gpu_ids=4,5,6,7
-export CUDA_VISIBLE_DEVICES=${gpu_ids} 
+# =================== Environment Setup ===================
+export NCCL_DEBUG=info
+export CUDA_DEVICE_MAX_CONNECTIONS=1
+# export CUDA_LAUNCH_BLOCKING=1 # Uncomment for easier debugging of CUDA errors
 
-nodes=("127.0.0.1")
-echo "Nodes to check: ${nodes[@]}"
-
-# We'll track PIDs so we can wait on them and detect errors
-declare -A pids
-export head_node=${nodes[0]}
-#head_node_ip=$(srun --nodes=1 --ntasks=1 -w "$head_node" hostname --ip-address)
-port=6379
-address_head=$head_node_ip:$port
-
-export worker_num=$SLURM_NNODES
 export HYDRA_FULL_ERROR=1
 export VLLM_USE_V1=0
 
 # =================== Data Mixture ===================
-SHARED_DATA_PATH=/home/hmpiao/adv_reason/Reasoning360/data
-TRAIN_DATA_DIR=${SHARED_DATA_PATH}/train
-TEST_DATA_DIR=${SHARED_DATA_PATH}/offline_eval
+SHARED_DATA_PATH=./data
+TRAIN_DATA_DIR=${SHARED_DATA_PATH}/train/
+TEST_DATA_DIR=${SHARED_DATA_PATH}/online_eval/
 
 # Math (train)
 math_train_path=${TRAIN_DATA_DIR}/math__combined_54.4k.parquet
@@ -67,7 +38,7 @@ primeintellect_train_path=${TRAIN_DATA_DIR}/codegen__primeintellect_7.5k.parquet
 taco_train_path=${TRAIN_DATA_DIR}/codegen__taco_8.8k.parquet
 # Code (test)
 humaneval_test_path=${TEST_DATA_DIR}/codegen__humaneval_164.parquet
-mbpp_test_path=${TEST_DATA_DIR}/codegen__mbpp_500.parquet
+mbpp_test_path=${TEST_DATA_DIR}/codegen__mbpp_200.parquet
 livecodebench_test_path=${TEST_DATA_DIR}/codegen__livecodebench_279.parquet
 
 # Logic (train)
@@ -78,84 +49,52 @@ graph_train_path=${TRAIN_DATA_DIR}/logic__graph_logical_1.2k.parquet
 ordering_train_path=${TRAIN_DATA_DIR}/logic__ordering_puzzle_1.9k.parquet
 zebra_train_path=${TRAIN_DATA_DIR}/logic__zebra_puzzle_1.3k.parquet
 # Logic (test)
-zebralogic_test_path=${TEST_DATA_DIR}/logic__zebra_puzzle_dataset_300.parquet
-ordering_puzzle_test_path=${TEST_DATA_DIR}/logic__ordering_puzzle_dataset_150.parquet
+ordering_puzzle_test_path=${TEST_DATA_DIR}/logic__ordering_puzzle_dataset_100.parquet
+zebralogic_test_path=${TEST_DATA_DIR}/logic__zebra_puzzle_dataset_200.parquet
+arcagi_test_path=${TEST_DATA_DIR}/logic__arcagi1_200.parquet
 
 # Simulation (train)
 codeio_train_path=${TRAIN_DATA_DIR}/simulation__codeio_3.7k.parquet
 # Simulation (test)
-codeio_test_path=${TEST_DATA_DIR}/simulation__codeio_500.parquet
-arcagi1_test_path=${TEST_DATA_DIR}/simulation__arcagi1_200.parquet
+codeio_test_path=${TEST_DATA_DIR}/simulation__codeio_200.parquet
 
 # Table (train)
 hitab_train_path=${TRAIN_DATA_DIR}/table__hitab_4.3k.parquet
-hitab_train_path_s1=${TRAIN_DATA_DIR}/table__hitab_0.2k_1.parquet
-hitab_train_path_s1_meta=${TRAIN_DATA_DIR}/table__hitab_0.2k_1_meta.parquet
-hitab_train_path_s1_meta_attack1=${TRAIN_DATA_DIR}/table__hitab_0.2k_1_meta_attack1.parquet
-hitab_train_path_s1_meta_attack2=${TRAIN_DATA_DIR}/table__hitab_0.2k_1_meta_attack2.parquet
-hitab_train_path_s2=${TRAIN_DATA_DIR}/table__hitab_0.2k_2.parquet
-hitab_train_path_s2_meta=${TRAIN_DATA_DIR}/table__hitab_0.2k_2_meta.parquet
-hitab_train_path_s3=${TRAIN_DATA_DIR}/table__hitab_0.2k_3.parquet
-hitab_train_path_s3_meta=${TRAIN_DATA_DIR}/table__hitab_0.2k_3_meta.parquet
 multihier_train_path=${TRAIN_DATA_DIR}/table__multihier_1.5k.parquet
 # Table (test)
-finqa_test_path=${TEST_DATA_DIR}/table__finqa_1.1k.parquet
-multihier_test_path=${TEST_DATA_DIR}/table__multihier_336.parquet
-hitab_test_path=${TEST_DATA_DIR}/table__hitab_1k.parquet
+multihier_test_path=${TEST_DATA_DIR}/table__multihier_200.parquet
+hitab_test_path=${TEST_DATA_DIR}/table__hitab_200.parquet
 
 # Stem (train)
-webinstruct_train_path=${TRAIN_DATA_DIR}/ytem__web_3.6k.parquet
+webinstruct_train_path=${TRAIN_DATA_DIR}/stem__web_3.6k.parquet
 # Stem (test)
-gpqa_diamond_test_path=${TEST_DATA_DIR}/stem__gpqa_diamond_198.parquet
 supergpqa_test_path=${TEST_DATA_DIR}/stem__supergpqa_200.parquet
 
-train_files="['${math_train_path}', '${leetcode_train_path}']"  # 以 math 和 code 为例，你可以按需添加更多任务
-test_files="['${math_test_path}','${aime_test_path}', '${humaneval_test_path}']"  # 以 math 和 code 为例，你可以按需添加更多任务
+train_files="['${math_train_path}']"  # Use math as example, add to more tasks as needed
+test_files="['${math_test_path}','${aime_test_path}']"  # Use math as example, add to more tasks as needed
 
 # =================== Model ===================
-BASE_MODEL=/home/hmpiao/hmpiao/Qwen2.5-1.5B-Base
-# BASE_MODEL=/home/hmpiao/hmpiao/Qwen3-1.7B-Base-think-qwen2chat-sftjudge-ke-2/Qwen3-1.7B-Base-think-qwen2chat-sftjudge-ke-2  # Note: This is the original Qwen32B-Base model. In training, we add 'think' system prompt to it (see README).
+BASE_MODEL=Qwen/Qwen2.5-7B
 
 # =================== Logging ===================
-WANDB_PROJECT=Reasoning360-1.7B
-WANDB_EXPERIMENT_NAME=${SLURM_JOB_ID}-${SLURM_JOB_NAME}-${BASE_MODEL##*/}-e6-s2-directcotstepjudge-frompretrain-0.2
-
-# If RESUME_CKPT_DIR is not empty, resume from the checkpoint
+# Generate a unique experiment name if not resuming
 if [[ -n "$RESUME_CKPT_DIR_NAME" ]]; then
     WANDB_EXPERIMENT_NAME="$RESUME_CKPT_DIR_NAME"
+else
+    TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+    WANDB_EXPERIMENT_NAME="single-node-${TIMESTAMP}-${BASE_MODEL##*/}"
 fi
 
+# =================== Ray Start (Single Node) ===================
+# Stop any previous Ray instances
+${CONDA_BIN_PATH}ray stop -f
 
-# =================== Ray start ===================
-# ray stop at all nodes
-#srun --nodes=$worker_num --ntasks=$worker_num --ntasks-per-node=1 ray stop
-ray stop
+# Start a new Ray cluster on the local machine
+# The number of CPUs is often best left for Ray to determine automatically.
+echo "Starting Ray on the local node with ${NUM_GPUS} GPUs..."
+${CONDA_BIN_PATH}ray start --head --num-gpus ${NUM_GPUS} --include-dashboard=True --dashboard-port 8265
+sleep 5
 
-sleep 10
-# Remove existing Ray cluster
-#srun --nodes=$worker_num --ntasks=$worker_num --ntasks-per-node=1 rm -rf /tmp/ray/ray_current_cluster
-rm -rf /tmp/ray/ray_current_cluster
-
-# Start Ray head node
-#srun --nodes=1 --ntasks=1 -w "$head_node" --export=ALL \
-#    ${CONDA_BIN_PATH}ray start --head --node-ip-address="$head_node_ip" --port=$port \
-#    --num-cpus "${SLURM_CPUS_PER_TASK}" --num-gpus 8 --include-dashboard=True --block &
-ray start --head --node-ip-address="$head_node_ip" --port=$port \
-    --num-cpus "${SLURM_CPUS_PER_TASK}" --num-gpus 4 --include-dashboard=True --block &
-
-sleep 10
-
-# Start Ray worker nodes
-for ((i = 1; i < worker_num; i++)); do
-    node_i=${nodes[$i]}
-    #echo "Starting WORKER $i at $node_i"
-    #srun --nodes=1 --ntasks=1 -w "$node_i" --export=ALL \
-    #    ${CONDA_BIN_PATH}ray start --address "$address_head" \
-    #    --num-cpus "${SLURM_CPUS_PER_TASK}" --num-gpus 8 --block &    
-    ray start --address "$address_head" \
-        --num-cpus "${SLURM_CPUS_PER_TASK}" --num-gpus 4 --block & 
-done
-sleep 10
 
 # =================== RL Config ===================
 # Note, we borrowed the config format from DAPO while here disabled all DAPO features to run the naive RL baseline.
