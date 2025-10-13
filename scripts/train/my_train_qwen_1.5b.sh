@@ -32,7 +32,7 @@ export STEM_LLM_JUDGE_URL="<STEM_LLM_JUDGE_URL>"  # Fill in the llm-as-judge hos
 export NCCL_P2P_DISABLE=1 
 
 # Get the list of allocated nodes
-gpu_ids=2,3
+gpu_ids=4,5,6,7
 export CUDA_VISIBLE_DEVICES=${gpu_ids} 
 
 nodes=("127.0.0.1")
@@ -199,7 +199,7 @@ top_k=-1 # 0 for HF rollout, -1 for vLLM rollout
 # gen_tp: Tensor Parallelism size for vLLM generation.
 # For a 32B model on 8 GPUs, TP=2 is a reasonable starting point. Adjust if you have memory issues.
 sp_size=1
-gen_tp=1
+gen_tp=2
 gen_max_num_seqs=128
 infer_micro_batch_size=null
 train_micro_batch_size=null
@@ -289,7 +289,7 @@ python -m recipe.dapo.main_dapo \
     trainer.project_name=${WANDB_PROJECT} \
     trainer.experiment_name=${WANDB_EXPERIMENT_NAME} \
     trainer.val_before_train=True \
-    trainer.n_gpus_per_node=2 \
+    trainer.n_gpus_per_node=4 \
     trainer.nnodes=1 \
     trainer.save_freq=10 \
     trainer.test_freq=10 \
