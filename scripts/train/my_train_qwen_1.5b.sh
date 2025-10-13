@@ -211,7 +211,7 @@ offload=True
 # Ensure your python environment (e.g., conda) is activated before running this script.
 echo "Starting training..."
 python -m recipe.dapo.main_dapo \
-    --config-path=./recipe/dapo/config \
+    --config-path=config \
     --config-name="dapo_trainer.yaml" \
     algorithm.adv_estimator=${adv_estimator} \
     algorithm.use_kl_in_reward=${use_kl_in_reward} \
