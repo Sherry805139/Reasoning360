@@ -32,7 +32,7 @@ export STEM_LLM_JUDGE_URL="<STEM_LLM_JUDGE_URL>"  # Fill in the llm-as-judge hos
 export NCCL_P2P_DISABLE=1 
 
 # Get the list of allocated nodes
-gpu_ids=2,3
+gpu_ids=4,5,6,7
 export CUDA_VISIBLE_DEVICES=${gpu_ids} 
 
 nodes=("127.0.0.1")
@@ -172,8 +172,8 @@ kl_loss_coef=0.0
 clip_ratio_low=0.2
 clip_ratio_high=0.2
 
-max_prompt_length=$((1024))
-max_response_length=$((1024))
+max_prompt_length=$((1024 * 4))
+max_response_length=$((1024 * 8))
 enable_overlong_buffer=False
 overlong_buffer_len=$((1024 * 4))
 overlong_penalty_factor=1.0
@@ -183,9 +183,9 @@ loss_agg_mode="token-mean"
 enable_filter_groups=False
 filter_groups_metric=acc
 max_num_gen_batches=10
-train_prompt_bsz=128  # on-policy model update batchsize: train_prompt_bsz * rollout.n
+train_prompt_bsz=512  # on-policy model update batchsize: train_prompt_bsz * rollout.n
 gen_prompt_bsz=$((train_prompt_bsz * 1))
-n_resp_per_prompt=4
+n_resp_per_prompt=16
 train_prompt_mini_bsz=64  # model grad update batchsize
 
 # Algorithm
@@ -199,13 +199,13 @@ top_k=-1 # 0 for HF rollout, -1 for vLLM rollout
 # gen_tp: Tensor Parallelism size for vLLM generation.
 # For a 32B model on 8 GPUs, TP=2 is a reasonable starting point. Adjust if you have memory issues.
 sp_size=1
-gen_tp=1
-gen_max_num_seqs=128
+gen_tp=2
+gen_max_num_seqs=1024
 infer_micro_batch_size=null
 train_micro_batch_size=null
 use_dynamic_bsz=True
-actor_ppo_max_token_len=$((max_prompt_length + max_response_length) * 1)  # increase this to speed up model forward & backward but note memory overflow
-infer_ppo_max_token_len=$((max_prompt_length + max_response_length) * 1)  # increase this to speed up model forward, but note memory overflow
+actor_ppo_max_token_len=$(( (max_prompt_length + max_response_length) * 2))  # increase this to speed up model forward & backward but note memory overflow
+infer_ppo_max_token_len=$(( (max_prompt_length + max_response_length) * 2))  # increase this to speed up model forward, but note memory overflow
 offload=True
 
 # =================== Start RL training ===================
@@ -259,7 +259,7 @@ python -m recipe.dapo.main_dapo \
     actor_rollout_ref.rollout.n=${n_resp_per_prompt} \
     actor_rollout_ref.rollout.log_prob_use_dynamic_bsz=${use_dynamic_bsz} \
     actor_rollout_ref.rollout.log_prob_max_token_len_per_gpu=${infer_ppo_max_token_len} \
-    actor_rollout_ref.rollout.gpu_memory_utilization=0.5 \
+    actor_rollout_ref.rollout.gpu_memory_utilization=0.7 \
     actor_rollout_ref.rollout.log_prob_micro_batch_size=${infer_micro_batch_size} \
     actor_rollout_ref.rollout.tensor_model_parallel_size=${gen_tp} \
     actor_rollout_ref.rollout.enable_chunked_prefill=True \
@@ -289,7 +289,7 @@ python -m recipe.dapo.main_dapo \
     trainer.project_name=${WANDB_PROJECT} \
     trainer.experiment_name=${WANDB_EXPERIMENT_NAME} \
     trainer.val_before_train=True \
-    trainer.n_gpus_per_node=2 \
+    trainer.n_gpus_per_node=4 \
     trainer.nnodes=1 \
     trainer.save_freq=10 \
     trainer.test_freq=10 \
