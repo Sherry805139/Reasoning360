@@ -13,6 +13,7 @@
 #SBATCH --time=720:00:00
 SLURM_NNODES=1
 SLURM_CPUS_PER_TASK=96
+NUM_GPUS=4
 
 # =================== Frequently Used Variables ===================
 RESUME_CKPT_DIR_NAME=""  # Fill in the checkpoint directory name to resume from, otherwise from scratch
@@ -288,7 +289,7 @@ python -m recipe.dapo.main_dapo \
     trainer.project_name=${WANDB_PROJECT} \
     trainer.experiment_name=${WANDB_EXPERIMENT_NAME} \
     trainer.val_before_train=True \
-    trainer.n_gpus_per_node=${NUM_GPUS} \
+    trainer.n_gpus_per_node=4 \
     trainer.nnodes=1 \
     trainer.save_freq=10 \
     trainer.test_freq=10 \
