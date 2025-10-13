@@ -111,8 +111,8 @@ webinstruct_train_path=${TRAIN_DATA_DIR}/ytem__web_3.6k.parquet
 gpqa_diamond_test_path=${TEST_DATA_DIR}/stem__gpqa_diamond_198.parquet
 supergpqa_test_path=${TEST_DATA_DIR}/stem__supergpqa_200.parquet
 
-train_files="['${math_train_path}', '${leetcode_train_path}']"  # 以 math 和 code 为例，你可以按需添加更多任务
-test_files="['${math_test_path}','${aime_test_path}', '${humaneval_test_path}']"  # 以 math 和 code 为例，你可以按需添加更多任务
+train_files="['${math_train_path}']"  # 以 math 为例，你可以按需添加更多任务
+test_files="['${math_test_path}']"  # 以 math 为例，你可以按需添加更多任务
 
 # =================== Model ===================
 BASE_MODEL=/home/hmpiao/hmpiao/Qwen2.5-1.5B-Base
