@@ -280,7 +280,7 @@ python -m recipe.dapo.main_dapo \
     +actor_rollout_ref.model.override_config.embd_pdrop=0. \
     +actor_rollout_ref.model.override_config.resid_pdrop=0. \
     actor_rollout_ref.model.enable_gradient_checkpointing=True \
-    reward_model.reward_manager=async_multi_process \
+    reward_model.reward_manager=dapo \
     reward_model.overlong_buffer.enable=${enable_overlong_buffer} \
     reward_model.overlong_buffer.len=${overlong_buffer_len} \
     reward_model.overlong_buffer.penalty_factor=${overlong_penalty_factor} \
