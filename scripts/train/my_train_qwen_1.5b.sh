@@ -41,6 +41,7 @@ echo "Nodes to check: ${nodes[@]}"
 declare -A pids
 export head_node=${nodes[0]}
 #head_node_ip=$(srun --nodes=1 --ntasks=1 -w "$head_node" hostname --ip-address)
+head_node_ip="127.0.0.1"
 port=6379
 address_head=$head_node_ip:$port
 
@@ -210,8 +211,8 @@ offload=True
 # Ensure your python environment (e.g., conda) is activated before running this script.
 echo "Starting training..."
 python -m recipe.dapo.main_dapo \
-    --config-path=config \
-    --config-name="dapo_fsdp_config.yaml" \
+    --config-path=./recipe/dapo/config \
+    --config-name="dapo_trainer.yaml" \
     algorithm.adv_estimator=${adv_estimator} \
     algorithm.use_kl_in_reward=${use_kl_in_reward} \
     algorithm.kl_ctrl.kl_coef=${kl_coef} \
