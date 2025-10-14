@@ -50,6 +50,14 @@ export worker_num=$SLURM_NNODES
 export HYDRA_FULL_ERROR=1
 export VLLM_USE_V1=0
 
+# Redirect Ray temporary directory to a larger disk to avoid /tmp exhaustion
+export RAY_TMPDIR=/data1/ray_tmp
+mkdir -p "$RAY_TMPDIR"
+
+# Choose a larger local directory for checkpoints to avoid write failures
+CHECKPOINT_DIR=/data1/Reasoning360_checkpoints
+mkdir -p "$CHECKPOINT_DIR"
+
 # =================== Data Mixture ===================
 SHARED_DATA_PATH=/home/hmpiao/adv_reason/Reasoning360/data
 TRAIN_DATA_DIR=${SHARED_DATA_PATH}/train
@@ -295,8 +303,11 @@ python -m recipe.dapo.main_dapo \
     trainer.val_before_train=True \
     trainer.n_gpus_per_node=4 \
     trainer.nnodes=1 \
-    trainer.save_freq=10 \
+    trainer.save_freq=200 \
     trainer.test_freq=10 \
     trainer.total_epochs=10 \
     trainer.log_val_generations=50 \
+    trainer.max_actor_ckpt_to_keep=1 \
+    trainer.max_critic_ckpt_to_keep=1 \
+    trainer.default_local_dir=${CHECKPOINT_DIR} \
     trainer.resume_mode=auto
