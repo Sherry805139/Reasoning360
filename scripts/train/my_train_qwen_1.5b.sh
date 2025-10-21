@@ -60,8 +60,8 @@ mkdir -p "$CHECKPOINT_DIR"
 
 # =================== Data Mixture ===================
 SHARED_DATA_PATH=/home/hmpiao/adv_reason/Reasoning360/data
-TRAIN_DATA_DIR=${SHARED_DATA_PATH}/train
-TEST_DATA_DIR=${SHARED_DATA_PATH}/offline_eval
+TRAIN_DATA_DIR=${SHARED_DATA_PATH}/train/
+TEST_DATA_DIR=${SHARED_DATA_PATH}/online_eval/
 
 # Math (train)
 math_train_path=${TRAIN_DATA_DIR}/math__combined_54.4k.parquet
@@ -77,7 +77,7 @@ primeintellect_train_path=${TRAIN_DATA_DIR}/codegen__primeintellect_7.5k.parquet
 taco_train_path=${TRAIN_DATA_DIR}/codegen__taco_8.8k.parquet
 # Code (test)
 humaneval_test_path=${TEST_DATA_DIR}/codegen__humaneval_164.parquet
-mbpp_test_path=${TEST_DATA_DIR}/codegen__mbpp_500.parquet
+mbpp_test_path=${TEST_DATA_DIR}/codegen__mbpp_200.parquet
 livecodebench_test_path=${TEST_DATA_DIR}/codegen__livecodebench_279.parquet
 
 # Logic (train)
@@ -88,39 +88,30 @@ graph_train_path=${TRAIN_DATA_DIR}/logic__graph_logical_1.2k.parquet
 ordering_train_path=${TRAIN_DATA_DIR}/logic__ordering_puzzle_1.9k.parquet
 zebra_train_path=${TRAIN_DATA_DIR}/logic__zebra_puzzle_1.3k.parquet
 # Logic (test)
-zebralogic_test_path=${TEST_DATA_DIR}/logic__zebra_puzzle_dataset_300.parquet
-ordering_puzzle_test_path=${TEST_DATA_DIR}/logic__ordering_puzzle_dataset_150.parquet
+ordering_puzzle_test_path=${TEST_DATA_DIR}/logic__ordering_puzzle_dataset_100.parquet
+zebralogic_test_path=${TEST_DATA_DIR}/logic__zebra_puzzle_dataset_200.parquet
+arcagi_test_path=${TEST_DATA_DIR}/logic__arcagi1_200.parquet
 
 # Simulation (train)
 codeio_train_path=${TRAIN_DATA_DIR}/simulation__codeio_3.7k.parquet
 # Simulation (test)
-codeio_test_path=${TEST_DATA_DIR}/simulation__codeio_500.parquet
-arcagi1_test_path=${TEST_DATA_DIR}/simulation__arcagi1_200.parquet
+codeio_test_path=${TEST_DATA_DIR}/simulation__codeio_200.parquet
 
 # Table (train)
 hitab_train_path=${TRAIN_DATA_DIR}/table__hitab_4.3k.parquet
-hitab_train_path_s1=${TRAIN_DATA_DIR}/table__hitab_0.2k_1.parquet
-hitab_train_path_s1_meta=${TRAIN_DATA_DIR}/table__hitab_0.2k_1_meta.parquet
-hitab_train_path_s1_meta_attack1=${TRAIN_DATA_DIR}/table__hitab_0.2k_1_meta_attack1.parquet
-hitab_train_path_s1_meta_attack2=${TRAIN_DATA_DIR}/table__hitab_0.2k_1_meta_attack2.parquet
-hitab_train_path_s2=${TRAIN_DATA_DIR}/table__hitab_0.2k_2.parquet
-hitab_train_path_s2_meta=${TRAIN_DATA_DIR}/table__hitab_0.2k_2_meta.parquet
-hitab_train_path_s3=${TRAIN_DATA_DIR}/table__hitab_0.2k_3.parquet
-hitab_train_path_s3_meta=${TRAIN_DATA_DIR}/table__hitab_0.2k_3_meta.parquet
 multihier_train_path=${TRAIN_DATA_DIR}/table__multihier_1.5k.parquet
 # Table (test)
-finqa_test_path=${TEST_DATA_DIR}/table__finqa_1.1k.parquet
-multihier_test_path=${TEST_DATA_DIR}/table__multihier_336.parquet
-hitab_test_path=${TEST_DATA_DIR}/table__hitab_1k.parquet
+multihier_test_path=${TEST_DATA_DIR}/table__multihier_200.parquet
+hitab_test_path=${TEST_DATA_DIR}/table__hitab_200.parquet
 
 # Stem (train)
-webinstruct_train_path=${TRAIN_DATA_DIR}/ytem__web_3.6k.parquet
+webinstruct_train_path=${TRAIN_DATA_DIR}/stem__web_3.6k.parquet
 # Stem (test)
-gpqa_diamond_test_path=${TEST_DATA_DIR}/stem__gpqa_diamond_198.parquet
 supergpqa_test_path=${TEST_DATA_DIR}/stem__supergpqa_200.parquet
 
-train_files="['${math_train_path}']"  # 以 math 为例，你可以按需添加更多任务
-test_files="['${math_test_path}']"  # 以 math 为例，你可以按需添加更多任务
+train_files="['${math_train_path}']"  # Use math as example, add to more tasks as needed
+test_files="['${math_test_path}','${aime_test_path}']"  # Use math as example, add to more tasks as needed
+
 
 # =================== Model ===================
 BASE_MODEL=/home/hmpiao/hmpiao/Qwen3-1.7B-Base-think-qwen2chat
@@ -179,8 +170,8 @@ kl_loss_coef=0.0
 clip_ratio_low=0.2
 clip_ratio_high=0.2
 
-max_prompt_length=$((1024))
-max_response_length=$((1024))
+max_prompt_length=$((1024 * 4))
+max_response_length=$((1024 * 8))
 enable_overlong_buffer=False
 overlong_buffer_len=$((1024 * 4))
 overlong_penalty_factor=1.0
@@ -190,9 +181,9 @@ loss_agg_mode="token-mean"
 enable_filter_groups=False
 filter_groups_metric=acc
 max_num_gen_batches=10
-train_prompt_bsz=128  # on-policy model update batchsize: train_prompt_bsz * rollout.n
+train_prompt_bsz=512  # on-policy model update batchsize: train_prompt_bsz * rollout.n
 gen_prompt_bsz=$((train_prompt_bsz * 1))
-n_resp_per_prompt=4
+n_resp_per_prompt=16
 train_prompt_mini_bsz=64  # model grad update batchsize
 
 # Algorithm
@@ -207,12 +198,12 @@ top_k=-1 # 0 for HF rollout, -1 for vLLM rollout
 # For a 32B model on 8 GPUs, TP=2 is a reasonable starting point. Adjust if you have memory issues.
 sp_size=1
 gen_tp=2
-gen_max_num_seqs=128
+gen_max_num_seqs=1024
 infer_micro_batch_size=null
 train_micro_batch_size=null
 use_dynamic_bsz=True
-actor_ppo_max_token_len=$((max_prompt_length + max_response_length) * 1)  # increase this to speed up model forward & backward but note memory overflow
-infer_ppo_max_token_len=$((max_prompt_length + max_response_length) * 1)  # increase this to speed up model forward, but note memory overflow
+actor_ppo_max_token_len=$((max_prompt_length + max_response_length) * 2)  # increase this to speed up model forward & backward but note memory overflow
+infer_ppo_max_token_len=$((max_prompt_length + max_response_length) * 2)  # increase this to speed up model forward, but note memory overflow
 offload=True
 
 # =================== Start RL training ===================
@@ -281,17 +272,20 @@ python -m recipe.dapo.main_dapo \
     actor_rollout_ref.rollout.val_kwargs.n=1 \
     actor_rollout_ref.rollout.val_kwargs.do_sample=True \
     actor_rollout_ref.model.path=$BASE_MODEL \
-    actor_rollout_ref.model.use_remove_padding=True \
+    actor_rollout_ref.model.use_remove_padding=False \
     actor_rollout_ref.rollout.multi_turn.enable=False \
     actor_rollout_ref.rollout.mode="sync" \
     +actor_rollout_ref.model.override_config.attention_dropout=0. \
     +actor_rollout_ref.model.override_config.embd_pdrop=0. \
     +actor_rollout_ref.model.override_config.resid_pdrop=0. \
+    +actor_rollout_ref.model.override_config.attn_implementation=sdpa \
     actor_rollout_ref.model.enable_gradient_checkpointing=True \
     actor_rollout_ref.actor.ppo_max_token_len_per_gpu=4096 \
     actor_rollout_ref.ref.log_prob_max_token_len_per_gpu=4096 \
     actor_rollout_ref.rollout.log_prob_max_token_len_per_gpu=4096 \
     actor_rollout_ref.rollout.max_num_batched_tokens=4096 \
+    actor_rollout_ref.actor.use_torch_compile=False \
+    actor_rollout_ref.ref.use_torch_compile=False \
     reward_model.reward_manager=dapo \
     reward_model.overlong_buffer.enable=${enable_overlong_buffer} \
     reward_model.overlong_buffer.len=${overlong_buffer_len} \
