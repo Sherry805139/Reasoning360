@@ -55,7 +55,7 @@ export RAY_TMPDIR=/data1/ray_tmp
 mkdir -p "$RAY_TMPDIR"
 
 # Choose a larger local directory for checkpoints to avoid write failures
-CHECKPOINT_DIR=/data1/Reasoning360_checkpoints
+CHECKPOINT_DIR=/home/hmpiao/hmpiao/xuerong/
 mkdir -p "$CHECKPOINT_DIR"
 
 # =================== Data Mixture ===================
@@ -123,8 +123,7 @@ train_files="['${math_train_path}']"  # 以 math 为例，你可以按需添加�
 test_files="['${math_test_path}']"  # 以 math 为例，你可以按需添加更多任务
 
 # =================== Model ===================
-BASE_MODEL=/home/hmpiao/hmpiao/Qwen2.5-1.5B-Base
-# BASE_MODEL=/home/hmpiao/hmpiao/Qwen3-1.7B-Base-think-qwen2chat-sftjudge-ke-2/Qwen3-1.7B-Base-think-qwen2chat-sftjudge-ke-2  # Note: This is the original Qwen32B-Base model. In training, we add 'think' system prompt to it (see README).
+BASE_MODEL=/home/hmpiao/hmpiao/Qwen3-1.7B-Base-think-qwen2chat
 
 # =================== Logging ===================
 WANDB_PROJECT=Reasoning360-1.7B
