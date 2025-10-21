@@ -49,6 +49,8 @@ address_head=$head_node_ip:$port
 export worker_num=$SLURM_NNODES
 export HYDRA_FULL_ERROR=1
 export VLLM_USE_V1=0
+export TORCH_COMPILE_DISABLE=1
+export TORCHDYNAMO_DISABLE=1
 
 # Redirect Ray temporary directory to a larger disk to avoid /tmp exhaustion
 export RAY_TMPDIR=/data1/ray_tmp
