@@ -58,6 +58,55 @@ mkdir -p "$RAY_TMPDIR"
 CHECKPOINT_DIR=/home/hmpiao/hmpiao/xuerong/
 mkdir -p "$CHECKPOINT_DIR"
 
+# =================== Disable flash-attn & torch.compile (fallback-safe) ===================
+# 1) 显式禁用 HF 的 FlashAttention-2 与 vLLM 的 FA 后端
+export TORCHDYNAMO_DISABLE=1
+export TORCH_COMPILE_DISABLE=1
+export TRANSFORMERS_USE_FLASH_ATTENTION_2=0
+# 如安装了 xformers，则让 vLLM 使用 XFORMERS 注意力；否则保持默认后端
+python - <<'PY'
+import importlib, os
+os.environ.pop('VLLM_ATTENTION_BACKEND', None)
+print('HAS_XFORMERS' if importlib.util.find_spec('xformers') else 'NO_XFORMERS')
+PY
+if [[ $(python - <<'PY'
+import importlib
+print('1' if importlib.util.find_spec('xformers') else '0')
+PY
+) == "1" ]]; then
+    export VLLM_ATTENTION_BACKEND=XFORMERS
+fi
+
+# 2) 提供最小 flash_attn 桩模块，避免导入报错（不实际启用 FA2）
+FA_STUB_DIR="${RAY_TMPDIR:-/tmp}/fa_stub"
+rm -rf "$FA_STUB_DIR" && mkdir -p "$FA_STUB_DIR/flash_attn/ops/triton" "$FA_STUB_DIR/flash_attn/layers"
+cat > "$FA_STUB_DIR/flash_attn/__init__.py" <<'PY'
+# minimal stub to satisfy imports; no real kernels
+__all__ = []
+PY
+cat > "$FA_STUB_DIR/flash_attn/bert_padding.py" <<'PY'
+import torch
+def index_first_axis(x, idx):
+    return x.index_select(0, idx) if isinstance(idx, torch.Tensor) else x[idx]
+def pad_input(x, *args, **kwargs):
+    return x, None, None
+def unpad_input(x, *args, **kwargs):
+    return x, None
+def rearrange(x, *args, **kwargs):
+    return x
+PY
+cat > "$FA_STUB_DIR/flash_attn/ops/triton/cross_entropy.py" <<'PY'
+import torch
+import torch.nn.functional as F
+def cross_entropy_loss(logits, labels, inplace_backward=True):
+    return F.cross_entropy(logits, labels, reduction="none")
+PY
+cat > "$FA_STUB_DIR/flash_attn/layers/rotary.py" <<'PY'
+def apply_rotary_emb(*args, **kwargs):
+    raise RuntimeError("flash_attn.layers.rotary.apply_rotary_emb is unavailable in stub")
+PY
+export PYTHONPATH="$FA_STUB_DIR:$PYTHONPATH"
+
 # =================== Data Mixture ===================
 SHARED_DATA_PATH=/home/hmpiao/adv_reason/Reasoning360/data
 TRAIN_DATA_DIR=${SHARED_DATA_PATH}/train
@@ -138,12 +187,14 @@ fi
 # =================== Ray start ===================
 # ray stop at all nodes
 #srun --nodes=$worker_num --ntasks=$worker_num --ntasks-per-node=1 ray stop
-ray stop
+ray stop --force || true
 
 sleep 10
 # Remove existing Ray cluster
 #srun --nodes=$worker_num --ntasks=$worker_num --ntasks-per-node=1 rm -rf /tmp/ray/ray_current_cluster
 rm -rf /tmp/ray/ray_current_cluster
+rm -rf /tmp/ray || true
+rm -rf ${RAY_TMPDIR:-/data1/ray_tmp}/* || true
 
 # Start Ray head node
 #srun --nodes=1 --ntasks=1 -w "$head_node" --export=ALL \
@@ -281,12 +332,13 @@ python -m recipe.dapo.main_dapo \
     actor_rollout_ref.rollout.val_kwargs.n=1 \
     actor_rollout_ref.rollout.val_kwargs.do_sample=True \
     actor_rollout_ref.model.path=$BASE_MODEL \
-    actor_rollout_ref.model.use_remove_padding=True \
+    actor_rollout_ref.model.use_remove_padding=False \
     actor_rollout_ref.rollout.multi_turn.enable=False \
     actor_rollout_ref.rollout.mode="sync" \
     +actor_rollout_ref.model.override_config.attention_dropout=0. \
     +actor_rollout_ref.model.override_config.embd_pdrop=0. \
     +actor_rollout_ref.model.override_config.resid_pdrop=0. \
+    +actor_rollout_ref.model.override_config.attn_implementation="eager" \
     actor_rollout_ref.model.enable_gradient_checkpointing=True \
     actor_rollout_ref.actor.ppo_max_token_len_per_gpu=4096 \
     actor_rollout_ref.ref.log_prob_max_token_len_per_gpu=4096 \
