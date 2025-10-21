@@ -280,10 +280,10 @@ python -m recipe.dapo.main_dapo \
     +actor_rollout_ref.model.override_config.resid_pdrop=0. \
     +actor_rollout_ref.model.override_config.attn_implementation=sdpa \
     actor_rollout_ref.model.enable_gradient_checkpointing=True \
-    actor_rollout_ref.actor.ppo_max_token_len_per_gpu=4096 \
-    actor_rollout_ref.ref.log_prob_max_token_len_per_gpu=4096 \
-    actor_rollout_ref.rollout.log_prob_max_token_len_per_gpu=4096 \
-    actor_rollout_ref.rollout.max_num_batched_tokens=4096 \
+    # actor_rollout_ref.actor.ppo_max_token_len_per_gpu=4096 \
+    # actor_rollout_ref.ref.log_prob_max_token_len_per_gpu=4096 \
+    # actor_rollout_ref.rollout.log_prob_max_token_len_per_gpu=4096 \
+    # actor_rollout_ref.rollout.max_num_batched_tokens=4096 \
     actor_rollout_ref.actor.use_torch_compile=False \
     actor_rollout_ref.ref.use_torch_compile=False \
     reward_model.reward_manager=dapo \
