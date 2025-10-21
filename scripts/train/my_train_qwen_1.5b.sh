@@ -260,7 +260,7 @@ python -m recipe.dapo.main_dapo \
     actor_rollout_ref.rollout.gpu_memory_utilization=0.5 \
     actor_rollout_ref.rollout.log_prob_micro_batch_size=${infer_micro_batch_size} \
     actor_rollout_ref.rollout.tensor_model_parallel_size=${gen_tp} \
-    actor_rollout_ref.rollout.enable_chunked_prefill=True \
+    actor_rollout_ref.rollout.enable_chunked_prefill=False \
     actor_rollout_ref.rollout.max_num_batched_tokens=${infer_ppo_max_token_len} \
     actor_rollout_ref.rollout.max_num_seqs=${gen_max_num_seqs} \
     actor_rollout_ref.rollout.temperature=${temperature} \
