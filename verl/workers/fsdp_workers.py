@@ -396,6 +396,14 @@ class ActorRolloutRefWorker(Worker):
             from verl.workers.rollout.vllm_rollout import vllm_mode, vLLMRollout
             from verl.workers.sharding_manager.fsdp_vllm import FSDPVLLMShardingManager
 
+            # Ensure CUDA cache is cleaned before vLLM memory profiling to avoid assertion
+            try:
+                get_torch_device().empty_cache()
+                import torch as _torch
+                if _torch.cuda.is_available():
+                    _torch.cuda.synchronize()
+            except Exception:
+                pass
             log_gpu_memory_usage(f"Before building {rollout_name} rollout", logger=logger)
             local_path = copy_to_local(self.config.model.path, use_shm=self.config.model.get("use_shm", False))
             lora_kwargs = {"lora_kwargs": {"enable_lora": True, "max_loras": 1, "max_lora_rank": self._lora_rank}} if self._is_lora else {}
