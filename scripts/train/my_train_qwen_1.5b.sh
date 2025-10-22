@@ -51,6 +51,8 @@ export HYDRA_FULL_ERROR=1
 export VLLM_USE_V1=0
 export TORCH_COMPILE_DISABLE=1
 export TORCHDYNAMO_DISABLE=1
+export WANDB_MODE=offline
+export HF_HUB_OFFLINE=1
 
 # Redirect Ray temporary directory to a larger disk to avoid /tmp exhaustion
 export RAY_TMPDIR=/data1/ray_tmp
