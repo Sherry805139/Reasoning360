@@ -53,6 +53,7 @@ export TORCH_COMPILE_DISABLE=1
 export TORCHDYNAMO_DISABLE=1
 export WANDB_MODE=offline
 export HF_HUB_OFFLINE=1
+export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 
 # Redirect Ray temporary directory to a larger disk to avoid /tmp exhaustion
 export RAY_TMPDIR=/data1/ray_tmp
@@ -175,7 +176,7 @@ clip_ratio_low=0.2
 clip_ratio_high=0.2
 
 max_prompt_length=$((1024 * 4))
-max_response_length=$((1024 * 4))
+max_response_length=$((1024 * 2))
 enable_overlong_buffer=False
 overlong_buffer_len=$((1024 * 4))
 overlong_penalty_factor=1.0
@@ -206,8 +207,8 @@ gen_max_num_seqs=128
 infer_micro_batch_size=null
 train_micro_batch_size=null
 use_dynamic_bsz=True
-actor_ppo_max_token_len=$((max_prompt_length + max_response_length) * 2)  # increase this to speed up model forward & backward but note memory overflow
-infer_ppo_max_token_len=$((max_prompt_length + max_response_length) * 2)  # increase this to speed up model forward, but note memory overflow
+actor_ppo_max_token_len=$((max_prompt_length + max_response_length))
+infer_ppo_max_token_len=$((max_prompt_length + max_response_length))
 offload=True
 
 # =================== Start RL training ===================
