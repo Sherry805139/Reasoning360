@@ -53,7 +53,6 @@ export TORCH_COMPILE_DISABLE=1
 export TORCHDYNAMO_DISABLE=1
 export WANDB_MODE=offline
 export HF_HUB_OFFLINE=1
-export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 
 # Redirect Ray temporary directory to a larger disk to avoid /tmp exhaustion
 export RAY_TMPDIR=/data1/ray_tmp
@@ -214,6 +213,7 @@ offload=True
 # =================== Start RL training ===================
 # Ensure your python environment (e.g., conda) is activated before running this script.
 echo "Starting training..."
+unset PYTORCH_CUDA_ALLOC_CONF
 python -m recipe.dapo.main_dapo \
     --config-path=config \
     --config-name="dapo_trainer.yaml" \
