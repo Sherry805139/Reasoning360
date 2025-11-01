@@ -16,7 +16,7 @@ SLURM_CPUS_PER_TASK=96
 NUM_GPUS=4
 
 # =================== Frequently Used Variables ===================
-RESUME_CKPT_DIR_NAME=""  # Fill in the checkpoint directory name to resume from, otherwise from scratch
+RESUME_CKPT_DIR_NAME="/home/hmpiao/hmpiao/xuerong/"  # Fill in the checkpoint directory name to resume from, otherwise from scratch
 export STEM_LLM_JUDGE_URL="<STEM_LLM_JUDGE_URL>"  # Fill in the llm-as-judge hosted URL, currently used only in 'STEM' domain
 
 #export NETRC="piaohongming02-city-university-of-hong-kong"
@@ -168,14 +168,14 @@ adv_estimator=grpo
 
 use_kl_in_reward=False
 kl_coef=0.0
-use_kl_loss=False
-kl_loss_coef=0.0
+use_kl_loss=True
+kl_loss_coef=0.001
 
 clip_ratio_low=0.2
 clip_ratio_high=0.2
 
 max_prompt_length=$((1024 * 4))
-max_response_length=$((1024 * 2))
+max_response_length=$((1024 * 8))
 enable_overlong_buffer=False
 overlong_buffer_len=$((1024 * 4))
 overlong_penalty_factor=1.0
@@ -187,7 +187,7 @@ filter_groups_metric=acc
 max_num_gen_batches=10
 train_prompt_bsz=512  # on-policy model update batchsize: train_prompt_bsz * rollout.n
 gen_prompt_bsz=$((train_prompt_bsz * 1))
-n_resp_per_prompt=1
+n_resp_per_prompt=16
 train_prompt_mini_bsz=64  # model grad update batchsize
 
 # Algorithm
@@ -202,12 +202,12 @@ top_k=-1 # 0 for HF rollout, -1 for vLLM rollout
 # For a 32B model on 8 GPUs, TP=2 is a reasonable starting point. Adjust if you have memory issues.
 sp_size=1
 gen_tp=2
-gen_max_num_seqs=64
+gen_max_num_seqs=1024
 infer_micro_batch_size=null
 train_micro_batch_size=null
 use_dynamic_bsz=True
-actor_ppo_max_token_len=$((max_prompt_length + max_response_length))
-infer_ppo_max_token_len=$((max_prompt_length + max_response_length))
+actor_ppo_max_token_len=$((max_prompt_length + max_response_length) * 2)
+infer_ppo_max_token_len=$((max_prompt_length + max_response_length) * 2)
 offload=False
 
 # =================== Start RL training ===================
@@ -239,7 +239,7 @@ python -m recipe.dapo.main_dapo \
     actor_rollout_ref.actor.use_dynamic_bsz=${use_dynamic_bsz} \
     actor_rollout_ref.actor.ppo_max_token_len_per_gpu=$((max_prompt_length + max_response_length)) \
     actor_rollout_ref.actor.strategy="fsdp" \
-    actor_rollout_ref.actor.optim.lr=1e-6 \
+    actor_rollout_ref.actor.optim.lr=3e-6 \
     actor_rollout_ref.actor.optim.lr_warmup_steps=10 \
     actor_rollout_ref.actor.optim.weight_decay=0.1 \
     actor_rollout_ref.actor.optim.warmup_style=constant \
@@ -277,6 +277,8 @@ python -m recipe.dapo.main_dapo \
     actor_rollout_ref.rollout.val_kwargs.n=1 \
     actor_rollout_ref.rollout.val_kwargs.do_sample=True \
     actor_rollout_ref.model.path=$BASE_MODEL \
+    actor_rollout_ref.model.lora_rank=64 \
+    actor_rollout_ref.model.lora_alpha=32 \
     actor_rollout_ref.model.use_remove_padding=False \
     actor_rollout_ref.rollout.multi_turn.enable=False \
     actor_rollout_ref.rollout.mode="sync" \
