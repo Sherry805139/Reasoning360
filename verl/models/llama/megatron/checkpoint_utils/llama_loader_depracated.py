@@ -35,7 +35,6 @@ def _megatron_calc_layer_map(config):
     layer_map = dict()
     num_layers_per_model = config.num_hidden_layers // pp_size // virtual_pp_size
     assert num_layers_per_model * pp_size * virtual_pp_size == config.num_hidden_layers
-
     for pp_rank_idx in range(pp_size):
         for virtual_pp_rank_idx in range(virtual_pp_size):
             layer_offset = virtual_pp_rank_idx * (config.num_hidden_layers // virtual_pp_size) + pp_rank_idx * num_layers_per_model
