@@ -204,8 +204,8 @@ gen_max_num_seqs=1024
 infer_micro_batch_size=40
 train_micro_batch_size=null
 use_dynamic_bsz=True
-actor_ppo_max_token_len=$((max_prompt_length + max_response_length) * 2)
-infer_ppo_max_token_len=$((max_prompt_length + max_response_length) * 2)
+actor_ppo_max_token_len=$(((max_prompt_length + max_response_length) * 2))
+infer_ppo_max_token_len=$(((max_prompt_length + max_response_length) * 2))
 offload=False
 
 # =================== Start RL training ===================
@@ -299,7 +299,7 @@ python -m recipe.dapo.main_dapo \
     trainer.logger=['console','wandb'] \
     trainer.project_name=${WANDB_PROJECT} \
     trainer.experiment_name=${WANDB_EXPERIMENT_NAME} \
-    trainer.val_before_train= False\
+    trainer.val_before_train=True \
     trainer.n_gpus_per_node=4 \
     trainer.nnodes=1 \
     trainer.save_freq=200 \
