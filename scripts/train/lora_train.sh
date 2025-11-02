@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 set -ex
 
-python3 -m verl.trainer.main_ppo \ 
-    algorithm.adv_estimator=grpo \ 
-    trainer.val_before_train=False \ 
+python3 -m verl.trainer.main_ppo \
+    algorithm.adv_estimator=grpo \
+    trainer.val_before_train=False \
     data.train_files=/home/hmpiao/adv_reason/Reasoning360/data//train/math__combined_54.4k.parquet \
     data.val_files=/home/hmpiao/adv_reason/Reasoning360/data/online_eval/math__math_500.parquet \
-    data.train_batch_size=512 \ 
+    data.train_batch_size=512 \
     data.max_prompt_length=512 \
     data.max_response_length=1024 \
     data.filter_overlong_prompts=True \
