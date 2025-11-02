@@ -3,15 +3,15 @@ set -x
 python3 -m verl.trainer.main_ppo \ 
     algorithm.adv_estimator=grpo \ # 指定使用的优势估计器（Advantage Estimator）是 GRPO（Group Relative Policy Optimization）。这意味着它会利用同一 Prompt 的多个 Rollout 之间的相对奖励来进行策略更新
     trainer.val_before_train=False \ # 训练前不进行预先验证
-    data.train_files=$HOME/data/gsm8k/train.parquet \
-    data.val_files=$HOME/data/gsm8k/test.parquet \
-    data.train_batch_size=16 \ # Rollout 阶段数据收集的批次大小
+    data.train_files=/home/hmpiao/adv_reason/Reasoning360/data//train/math__combined_54.4k.parquet \
+    data.val_files=/home/hmpiao/adv_reason/Reasoning360/data/online_eval/math__math_500.parquet \
+    data.train_batch_size=512 \ # Rollout 阶段数据收集的批次大小
     data.max_prompt_length=512 \
     data.max_response_length=1024 \
     data.filter_overlong_prompts=True \ # 过滤掉长度超过 max_prompt_length 的 Prompt。
     data.truncation='error' \ # 如果数据处理中发生截断，则抛出错误，以保证数据完整性。
     data.shuffle=False \ # 在训练期间不打乱数据顺序
-    actor_rollout_ref.model.path=Qwen/Qwen2.5-3B-Instruct \ # 指定作为 Actor/策略模型的基座模型为 Qwen2.5-3B-Instruct
+    actor_rollout_ref.model.path=/home/hmpiao/hmpiao/Qwen3-1.7B-Base-think-qwen2chat \ # 指定作为 Actor/策略模型的基座模型为 Qwen2.5-3B-Instruct
     actor_rollout_ref.model.lora_rank=64 \
     actor_rollout_ref.model.lora_alpha=32 \
     actor_rollout_ref.actor.optim.lr=3e-6 \
@@ -28,7 +28,7 @@ python3 -m verl.trainer.main_ppo \
     actor_rollout_ref.rollout.log_prob_micro_batch_size_per_gpu=40 \
     actor_rollout_ref.rollout.tensor_model_parallel_size=2 \ # 在 Rollout 阶段，将模型切分到 2 个 GPU 上进行张量并行计算
     actor_rollout_ref.rollout.name=vllm \
-    actor_rollout_ref.rollout.gpu_memory_utilization=0.6 \ # 限制 vLLM 在 Rollout 时只占用 GPU 显存的 60%
+    actor_rollout_ref.rollout.gpu_memory_utilization=0.5 \ # 限制 vLLM 在 Rollout 时只占用 GPU 显存的 60%
     actor_rollout_ref.rollout.n=5 \ # 每个 Prompt 将生成 5 个不同的 Response（轨迹）
     actor_rollout_ref.rollout.load_format=safetensors \
     actor_rollout_ref.rollout.layered_summon=True \
