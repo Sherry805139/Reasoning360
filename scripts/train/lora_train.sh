@@ -1,11 +1,6 @@
 #!/usr/bin/env bash
 set -ex
 
-# 强制禁用 flashinfer，使用 PyTorch 采样后端
-export VLLM_USE_FLASHINFER=0
-export FLASHINFER_DISABLE=1
-export VLLM_SAMPLING_BACKEND=torch
-
 python3 -m verl.trainer.main_ppo \
     algorithm.adv_estimator=grpo \
     trainer.val_before_train=False \
