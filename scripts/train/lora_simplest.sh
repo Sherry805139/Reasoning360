@@ -1,6 +1,6 @@
 set -x
 
-python3 -m verl.trainer.main_ppo \ 
+python3 -m verl.trainer.main_ppo \
     algorithm.adv_estimator=grpo \
     trainer.val_before_train=False \
     data.train_files=/home/hmpiao/adv_reason/Reasoning360/data//train/math__combined_54.4k.parquet \
